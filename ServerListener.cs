@@ -23,10 +23,12 @@ namespace KirkServer
             IPEndPoint serverEndPoint = new IPEndPoint(getIP("localhost").Result, 6789);
             listener = new TcpListener(serverEndPoint);
             connectedClients = new List<ConnectionModel>();
+            listener.Start(100);
         }
 
         public void receiveMessage(int connectionId)
         {
+            Console.WriteLine("Accepting messages... \n");
             while (connectedClients[connectionId].isConnected)
             {
                 string message;
@@ -49,55 +51,55 @@ namespace KirkServer
 
         public void listenForConnection()
         {
-            listener.Start(100);
             while (true)
             {
-                Console.Write("Waiting for a connection... ");
+                Console.Write("Waiting for a connection... \n");
 
                 // Perform a blocking call to accept requests. 
                 // You could also user server.AcceptSocket() here.
                 TcpClient client = listener.AcceptTcpClient();
-                Console.WriteLine("Connected!");
-
-                // Get a stream object for reading and writing
-                NetworkStream stream = client.GetStream();
-                ConnectionModel connectingClient = new ConnectionModel(client, stream);
-                connectingClient.isConnected = false;
-                connectedClients.Add(connectingClient);
-                int index = connectedClients.Count - 1;
-                Task processConnectionTask = new Task(() => readConnectionRequest(index));
-                processConnectionTask.Start();
+                Console.WriteLine("Connected!\n");
+                try
+                {
+                    // Get a stream object for reading and writing
+                    NetworkStream stream = client.GetStream();
+                    ConnectionModel connectingClient = new ConnectionModel(client, stream);
+                    connectingClient.isConnected = false;
+                    connectedClients.Add(connectingClient);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    throw;
+                }
             }
         }
 
-        public async Task<bool> readConnectionRequest(int connectionId)
+        public void processConnectionRequest(int connectionId)
         {
             if (connectedClients[connectionId].isConnected)
             {
-                throw new Exception("The Connection is already connected!");
+                throw new Exception("The Connection is already connected!\n");
             }
 
-            Console.WriteLine("Processing connection request...");
-            String connectionData = null;
-            string message;
-
-            // Loop to receive all the data sent by the client. 
-            while ((message = connectedClients[connectionId].ReaderStream.ReadLine()) != null )
+            Console.WriteLine("Processing connection request...\n");
+            try
             {
-                Console.WriteLine("Received: {0}", message);
+                string message = connectedClients[connectionId].ReaderStream.ReadLine();
+                Console.WriteLine("Received: {0}", message + "\n");
 
                 string[] splitData = message.Split('~');
                 connectedClients[connectionId].changeUserName(splitData[0]);
                 connectedClients[connectionId].changeIPAddress(splitData[1]);
 
-                byte[] msg = System.Text.Encoding.ASCII.GetBytes(message);
-
                 // Send back a response.
                 connectedClients[connectionId].WriterStream.Write(splitData);
-                Console.WriteLine("User: {0}", splitData[0] + " connected through IP: " + splitData[1]);
-                return true;
+                Console.WriteLine("User: {0}", splitData[0] + " connected through IP: " + splitData[1] + "\n");
             }
-            return false;
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
     }
 }

@@ -12,10 +12,16 @@ namespace KirkServer
     {
         private static TaskFactory taskHandler;
         private Task[] preConnectionTasks;
+        private Task[] midConnectionTasks;
+        private Task[] postConnectionTasks;
         public Runner()
         {
             taskHandler = new TaskFactory();
-            taskHandler.StartNew(listenForConnection);
+            preConnectionTasks = new Task[2];
+            midConnectionTasks = new Task[2];
+            postConnectionTasks = new Task[2];
+            preConnectionTasks[0] = Task.Factory.StartNew(() => listenForConnection());
+            Task.Factory.ContinueWhenAny(preConnectionTasks, (b) => midConnectionTasks[0]);
             //taskHandler.StartNew(() => receiveMessage(index));
         }
 
