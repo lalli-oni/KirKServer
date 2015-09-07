@@ -10,14 +10,18 @@ namespace KirkServer
 {
     class Runner : ServerListener
     {
+        private static TaskFactory taskHandler;
+        private Task[] preConnectionTasks;
         public Runner()
         {
-            running();
+            taskHandler = new TaskFactory();
+            taskHandler.StartNew(listenForConnection);
+            //taskHandler.StartNew(() => receiveMessage(index));
         }
 
-        public void running()
+        public void makeConnectionThread()
         {
-            receiveMessage(base.listener);
+
 
         }
     }

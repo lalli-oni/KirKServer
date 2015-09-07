@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -11,9 +12,12 @@ namespace KirkServer
     class ConnectionModel
     {
         private TcpClient _listener;
-        private NetworkStream _listenerStream;
+        private NetworkStream _stream;
         private string _userName;
         private IPAddress _clientipAddress;
+        private bool _isConnected;
+        private StreamWriter _writerStream;
+        private StreamReader _readerStream;
 
         public TcpClient Listener
         {
@@ -21,10 +25,22 @@ namespace KirkServer
             private set { _listener = value; }
         }
 
-        public NetworkStream ListenerStream
+        public NetworkStream Stream
         {
-            get { return _listenerStream; }
-            private set { _listenerStream = value; }
+            get { return _stream; }
+            private set { _stream = value; }
+        }
+
+        public StreamWriter WriterStream
+        {
+            get { return _writerStream; }
+            set { _writerStream = value; }
+        }
+
+        public StreamReader ReaderStream
+        {
+            get { return _readerStream; }
+            set { _readerStream = value; }
         }
 
         public string UserName
@@ -36,7 +52,13 @@ namespace KirkServer
         public IPAddress ClientIpAddress
         {
             get { return _clientipAddress; }
-            private set { _clientipAddress = value; }
+            set { _clientipAddress = value; }
+        }
+
+        public bool isConnected
+        {
+            get { return _isConnected; }
+            set { _isConnected = value; }
         }
 
         /// <summary>
@@ -47,8 +69,11 @@ namespace KirkServer
         /// <param name="inpIPaddress">The IP address of the client</param>
         public ConnectionModel(TcpClient inpListener, NetworkStream inpStream)
         {
+            isConnected = false;
             Listener = inpListener;
-            ListenerStream = inpStream;
+            Stream = inpStream;
+            ReaderStream = new StreamReader(Stream);
+            WriterStream = new StreamWriter(Stream) { AutoFlush = true};
         }
 
         /// <summary>
@@ -59,9 +84,11 @@ namespace KirkServer
         /// <param name="inpIPaddress">The IP address of the client</param>
         public ConnectionModel(TcpClient inpListener, NetworkStream inpStream, IPAddress inpIPaddress)
         {
+            isConnected = false;
             Listener = inpListener;
-            ListenerStream = inpStream;
+            Stream = inpStream;
             ClientIpAddress = inpIPaddress;
+            ReaderStream = new StreamReader(Stream);
         }
 
         /// <summary>
@@ -73,10 +100,29 @@ namespace KirkServer
         /// <param name="inpIPaddress">The IP address of the client</param>
         public ConnectionModel(TcpClient inpListener, NetworkStream inpStream, string inpUserName, IPAddress inpIPaddress)
         {
+            isConnected = false;
             Listener = inpListener;
-            ListenerStream = inpStream;
+            Stream = inpStream;
             UserName = inpUserName;
             ClientIpAddress = inpIPaddress;
+            ReaderStream = new StreamReader(Stream);
+        }
+
+        public void changeUserName(string inpUserName)
+        {
+            UserName = inpUserName;
+        }
+
+        public void changeIPAddress(string inpIPaddress)
+        {
+            if (ClientIpAddress == null)
+            {
+                ClientIpAddress = IPAddress.Parse(inpIPaddress);
+            }
+            else
+            {
+                throw new Exception("IP address is already set, changing IP addressess not supported!");
+            }
         }
     }
 }
