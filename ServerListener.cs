@@ -26,30 +26,26 @@ namespace KirkServer
             listener.Start(100);
         }
 
-        public void receiveMessage(int connectionId)
+        public async Task receiveMessage(ConnectionModel client)
         {
-            Console.WriteLine("Accepting messages... \n");
-            while (connectedClients[connectionId].isConnected)
+            while (client.isConnected)
             {
-                string message;
-                while ((message = connectedClients[connectionId].ReaderStream.ReadLine()) != null)
-                {
-                    broadcastMessage(message);
-                    Console.WriteLine(message);
-                    connectedClients[connectionId].ReaderStream.Dispose();
-                }
+                string message = await client.ReaderStream.ReadLineAsync();
+                broadcastMessage(message, client);
+                Console.WriteLine(message);
             }
         }
 
-        public void broadcastMessage(string broadcastingMessage)
+        public void broadcastMessage(string broadcastingMessage, ConnectionModel client)
         {
-            foreach (ConnectionModel client in connectedClients)
+            Console.WriteLine("Broadcasting message: " + broadcastingMessage);
+            foreach (ConnectionModel listeningClients in connectedClients)
             {
-                client.WriterStream.WriteLineAsync(broadcastingMessage);
+                listeningClients.WriterStream.WriteLineAsync(broadcastingMessage);
             }
         }
 
-        public void listenForConnection()
+        public async Task listenForConnection()
         {
             while (true)
             {
@@ -75,9 +71,9 @@ namespace KirkServer
             }
         }
 
-        public void processConnectionRequest(int connectionId)
+        public async Task processConnectionRequest(ConnectionModel client)
         {
-            if (connectedClients[connectionId].isConnected)
+            if (client.isConnected)
             {
                 throw new Exception("The Connection is already connected!\n");
             }
@@ -85,15 +81,16 @@ namespace KirkServer
             Console.WriteLine("Processing connection request...\n");
             try
             {
-                string message = connectedClients[connectionId].ReaderStream.ReadLine();
+                string message = client.ReaderStream.ReadLine();
                 Console.WriteLine("Received: {0}", message + "\n");
 
                 string[] splitData = message.Split('~');
-                connectedClients[connectionId].changeUserName(splitData[0]);
-                connectedClients[connectionId].changeIPAddress(splitData[1]);
+                client.changeUserName(splitData[0]);
+                client.changeIPAddress(splitData[1]);
 
                 // Send back a response.
-                connectedClients[connectionId].WriterStream.Write(splitData);
+                client.WriterStream.Write(splitData);
+                client.isConnected = true;
                 Console.WriteLine("User: {0}", splitData[0] + " connected through IP: " + splitData[1] + "\n");
             }
             catch (Exception e)
