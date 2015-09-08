@@ -11,35 +11,28 @@ namespace KirkServer
     class Runner : ServerListener
     {
         private static TaskFactory taskHandler;
-        private Task[] preConnectionTasks;
-        private Task[] midConnectionTasks;
-        private Task[] postConnectionTasks;
+        private Task listeningTask;
         private int connectingClientIndex;
-
-        private delegate void clientConnectedDelegate();
-        private event clientConnectedDelegate clientConnected;
+        
 
         public Runner()
         {
-            taskHandler = new TaskFactory();
-            preConnectionTasks = new Task[2];
-            midConnectionTasks = new Task[2];
-            postConnectionTasks = new Task[2];
+            taskHandler = new TaskFactory(TaskScheduler.Default);
             while (true)
             {
-                if (preConnectionTasks[0] == null)
+                if (listeningTask == null)
                 {
                     startListeningAsync();
                 }
                 else
                 {
-                    if (preConnectionTasks[0].Status == TaskStatus.RanToCompletion)
+                    if (listeningTask.Status == TaskStatus.RanToCompletion)
                     {
                         listeningAsync();
                     }
                 }
                 messagingAsync();
-                while (preConnectionTasks[0] == null)
+                while (listeningTask == null)
                 {
                     Console.WriteLine("Initializing...");
                     Thread.Sleep(1000);
@@ -50,29 +43,40 @@ namespace KirkServer
 
         public void startListeningAsync()
         {
-            preConnectionTasks[0] = Task.Factory.StartNew(() => listenForConnection());
+            listeningTask = Task.Factory.StartNew(() => listenForConnection());
         }
 
         public async void listeningAsync()
         {
-            preConnectionTasks[0].Start();
+            listeningTask.Start();
         }
 
         private async void messagingAsync()
         {
             if (connectedClients.Any())
             {
-                foreach (ConnectionModel client in connectedClients)
+                Parallel.ForEach(connectedClients, client =>
                 {
                     if (client.isConnected == false)
                     {
-                        await processConnectionRequest(client);
+                        processConnectionRequest(client);
                     }
                     else
                     {
-                        taskHandler.StartNew(() => receiveMessage(client));
+                        client.receiveMessage();
                     }
-                }
+                });
+                //foreach (ConnectionModel client in connectedClients)
+                //{
+                //    if (client.isConnected == false)
+                //    {
+                //        await processConnectionRequest(client);
+                //    }
+                //    else
+                //    {
+                //        client.receiveMessage();
+                //    }
+                //}
             }
         }
     }

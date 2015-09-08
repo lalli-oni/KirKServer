@@ -29,16 +29,13 @@ namespace KirkServer
         public async Task receiveMessage(ConnectionModel client)
         {
             string message = await client.ReaderStream.ReadLineAsync();
-            broadcastMessage(message, client);
+            broadcastMessage(message);
         }
 
-        public void broadcastMessage(string broadcastingMessage, ConnectionModel client)
+        public void broadcastMessage(string broadcastingMessage)
         {
-            Console.WriteLine("Broadcasting message from " + client.UserName + ": " + broadcastingMessage);
-            foreach (ConnectionModel listeningClients in connectedClients)
-            {
-                listeningClients.WriterStream.WriteLineAsync(client.UserName + ": " + broadcastingMessage);
-            }
+            Console.WriteLine("Broadcasting message: " + broadcastingMessage);
+            Parallel.ForEach(connectedClients, listeningClient => listeningClient.sendMessage(broadcastingMessage));
         }
 
         public async Task listenForConnection()

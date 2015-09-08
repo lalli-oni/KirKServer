@@ -18,6 +18,7 @@ namespace KirkServer
         private bool _isConnected;
         private StreamWriter _writerStream;
         private StreamReader _readerStream;
+        private Task _sendMsgTask;
 
         public TcpClient Listener
         {
@@ -123,6 +124,22 @@ namespace KirkServer
             {
                 throw new Exception("IP address is already set, changing IP addressess not supported!");
             }
+        }
+
+        public async Task sendMessage(string broadcastingMessage)
+        {
+            Console.WriteLine("Broadcasting message from " + this.UserName + ": " + broadcastingMessage);
+            await this.WriterStream.WriteLineAsync(this.UserName + ": " + broadcastingMessage);
+            await WriterStream.FlushAsync();
+        }
+        public async Task<string> receiveMessage()
+        {
+            string message = null;
+            Console.WriteLine("Receiving message from " + this.UserName);
+            message = ReaderStream.ReadToEndAsync().Result;
+            await WriterStream.FlushAsync();
+            Console.WriteLine("Message Received.");
+            return message;
         }
     }
 }
