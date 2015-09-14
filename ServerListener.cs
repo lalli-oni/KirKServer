@@ -12,15 +12,15 @@ using System.Threading.Tasks;
 
 namespace KirkServer
 {
-    class ServerListener : AddressService
+    public class ServerListener : AddressService
     {
         public TcpListener listener;
         public List<ConnectionModel> connectedClients;
 
         public ServerListener()
         {
-            //Establishes a local endpoint by getting the localhost IP using the AddressService
-            IPEndPoint serverEndPoint = new IPEndPoint(getIP("localhost").Result, 6789);
+            Console.WriteLine("Starting server at: 10.200.128.141:6789");
+            IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse("10.200.128.141"), 6789);
             listener = new TcpListener(serverEndPoint);
             connectedClients = new List<ConnectionModel>();
             listener.Start(100);
@@ -38,7 +38,7 @@ namespace KirkServer
             Parallel.ForEach(connectedClients, listeningClient => listeningClient.sendMessage(broadcastingMessage));
         }
 
-        public async Task listenForConnection()
+        public async Task listenForConnectionAsync()
         {
             while (true)
             {
@@ -46,7 +46,7 @@ namespace KirkServer
 
                 // Perform a blocking call to accept requests. 
                 // You could also user server.AcceptSocket() here.
-                TcpClient client = listener.AcceptTcpClient();
+                TcpClient client = await listener.AcceptTcpClientAsync();
                 Console.WriteLine("Connected!\n");
                 try
                 {
@@ -63,8 +63,33 @@ namespace KirkServer
                 }
             }
         }
+        public ConnectionModel listenForConnection()
+        {
+            while (true)
+            {
+                Console.Write("Waiting for a connection... \n");
 
-        public async Task processConnectionRequest(ConnectionModel client)
+                // Perform a blocking call to accept requests. 
+                // You could also user server.AcceptSocket() here.
+                TcpClient client = listener.AcceptTcpClient();
+                Console.WriteLine("Connected!\n");
+                try
+                {
+                    // Get a stream object for reading and writing
+                    NetworkStream stream = client.GetStream();
+                    ConnectionModel connectingClient = new ConnectionModel(client, stream);
+                    connectingClient.isConnected = false;
+                    return connectingClient;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    throw;
+                }
+            }
+        }
+
+        public bool processConnectionRequest(ConnectionModel client)
         {
             if (client.isConnected)
             {
@@ -75,6 +100,36 @@ namespace KirkServer
             try
             {
                 string message = client.ReaderStream.ReadLine();
+                Console.WriteLine("Received: {0}", message + "\n");
+
+                string[] splitData = message.Split('~');
+                client.changeIPAddress(splitData[0]);
+                client.changeUserName(splitData[1]);
+
+                // Send back a response.
+                client.WriterStream.Write(splitData);
+                client.isConnected = true;
+                Console.WriteLine("User: {0}", splitData[0] + " connected through IP: " + splitData[1] + "\n");
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return false;
+            }
+        }
+
+        public async Task processConnectionRequestAsync(ConnectionModel client)
+        {
+            if (client.isConnected)
+            {
+                throw new Exception("The Connection is already connected!\n");
+            }
+
+            Console.WriteLine("Processing connection request...\n");
+            try
+            {
+                string message = await client.ReaderStream.ReadLineAsync();
                 Console.WriteLine("Received: {0}", message + "\n");
 
                 string[] splitData = message.Split('~');

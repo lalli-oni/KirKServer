@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace KirkServer
 {
-    class ConnectionModel
+    public class ConnectionModel
     {
         private TcpClient _listener;
         private NetworkStream _stream;
@@ -126,18 +126,43 @@ namespace KirkServer
             }
         }
 
-        public async Task sendMessage(string broadcastingMessage)
+        public void sendMessage(string broadcastingMessage)
+        {
+            Console.WriteLine("Broadcasting message from " + this.UserName + ": " + broadcastingMessage);
+            this.WriterStream.WriteLine(this.UserName + ": " + broadcastingMessage);
+            WriterStream.Flush();
+        }
+
+        public async Task sendMessageAsync(string broadcastingMessage)
         {
             Console.WriteLine("Broadcasting message from " + this.UserName + ": " + broadcastingMessage);
             await this.WriterStream.WriteLineAsync(this.UserName + ": " + broadcastingMessage);
             await WriterStream.FlushAsync();
         }
-        public async Task<string> receiveMessage()
+
+        public async Task<string> receiveMessageAsync()
         {
             string message = null;
             Console.WriteLine("Receiving message from " + this.UserName);
-            message = ReaderStream.ReadToEndAsync().Result;
+            message = await ReaderStream.ReadToEndAsync();
             await WriterStream.FlushAsync();
+            Console.WriteLine("Message Received.");
+            return message;
+        }
+
+        public string receiveMessage()
+        {
+            string message = null;
+            Console.WriteLine("Receiving message from " + this.UserName);
+            try
+            {
+                message = ReaderStream.ReadToEnd();
+                WriterStream.Flush();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
             Console.WriteLine("Message Received.");
             return message;
         }

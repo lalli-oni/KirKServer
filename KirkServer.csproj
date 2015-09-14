@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{75AD3D32-1807-4A9E-9DD9-3E1AC26D79BA}</ProjectGuid>
+    <ProjectGuid>{E64C1899-9A6B-483E-A97C-5D7B2DBB5484}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>KirkServer</RootNamespace>

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace KirkServer
 {
-    class Runner : ServerListener
+    public class Runner : ServerListener
     {
         private static TaskFactory taskHandler;
         private Task listeningTask;

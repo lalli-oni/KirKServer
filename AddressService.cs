@@ -7,17 +7,27 @@ using System.Threading.Tasks;
 
 namespace KirkServer
 {
-    class AddressService
+    public class AddressService
     {
-        public async Task<IPAddress> getIP(string hostName)
+        public IPAddress getIP(string hostName)
         {
-
-            string name = Dns.GetHostName();
             try
             {
-                IPAddress[] addrs = Dns.Resolve(name).AddressList;
-                foreach (IPAddress addr in addrs)
-                    Console.WriteLine("{0}/{1}", name, addr);
+                IPAddress[] addrs = Dns.GetHostAddresses(hostName);
+                return addrs[0];
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return null;
+            }
+        }
+
+        public async Task<IPAddress> getIPAsync(string hostName)
+        {
+            try
+            {
+                IPAddress[] addrs = await Dns.GetHostAddressesAsync(hostName);
                 return addrs[0];
             }
             catch (Exception e)
