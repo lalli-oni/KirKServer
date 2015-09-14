@@ -27,7 +27,7 @@ namespace KirkServer
                                 foreach (var client in listener.connectedClients)
                                 {
                                     string msg = client.receiveMessage();
-                                    if (msg.Any())
+                                    if (msg != null)
                                     {
                                         Task broadcastMessage = Task.Run(() =>
                                         {

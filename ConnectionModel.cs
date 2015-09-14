@@ -90,6 +90,7 @@ namespace KirkServer
             Stream = inpStream;
             ClientIpAddress = inpIPaddress;
             ReaderStream = new StreamReader(Stream);
+            WriterStream = new StreamWriter(Stream) { AutoFlush = true };
         }
 
         /// <summary>
@@ -107,6 +108,7 @@ namespace KirkServer
             UserName = inpUserName;
             ClientIpAddress = inpIPaddress;
             ReaderStream = new StreamReader(Stream);
+            WriterStream = new StreamWriter(Stream) { AutoFlush = true };
         }
 
         public void changeUserName(string inpUserName)
@@ -129,15 +131,13 @@ namespace KirkServer
         public void sendMessage(string broadcastingMessage)
         {
             Console.WriteLine("Broadcasting message from " + this.UserName + ": " + broadcastingMessage);
-            this.WriterStream.WriteLine(this.UserName + ": " + broadcastingMessage);
-            WriterStream.Flush();
+            this.WriterStream.WriteLine(this.UserName + ": " + broadcastingMessage + "\n");
         }
 
         public async Task sendMessageAsync(string broadcastingMessage)
         {
             Console.WriteLine("Broadcasting message from " + this.UserName + ": " + broadcastingMessage);
             await this.WriterStream.WriteLineAsync(this.UserName + ": " + broadcastingMessage);
-            await WriterStream.FlushAsync();
         }
 
         public async Task<string> receiveMessageAsync()
@@ -145,7 +145,6 @@ namespace KirkServer
             string message = null;
             Console.WriteLine("Receiving message from " + this.UserName);
             message = await ReaderStream.ReadToEndAsync();
-            await WriterStream.FlushAsync();
             Console.WriteLine("Message Received.");
             return message;
         }
@@ -156,8 +155,7 @@ namespace KirkServer
             Console.WriteLine("Receiving message from " + this.UserName);
             try
             {
-                message = ReaderStream.ReadToEnd();
-                WriterStream.Flush();
+                message = ReaderStream.ReadLine();
             }
             catch (Exception)
             {
