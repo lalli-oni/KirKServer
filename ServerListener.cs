@@ -19,12 +19,14 @@ namespace KirkServer
         public TcpListener listener;
         public ConcurrentDictionary<ConnectionModel,string> connectedClients;
         public int nrOfClients;
+        private List<string> userNames;
 
         public ServerListener()
         {
             Console.WriteLine("Starting server at: 10.200.128.171:6789");
             IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse("10.200.128.171"), 6789);
             nrOfClients = 0;
+            userNames = new List<string>();
             listener = new TcpListener(serverEndPoint);
             connectedClients = new ConcurrentDictionary<ConnectionModel, string>();
             listener.Start(100);
@@ -122,17 +124,25 @@ namespace KirkServer
             Console.WriteLine("Processing connection request...\n");
             try
             {
-                string message = client.ReaderStream.ReadLine();
-                Console.WriteLine("Received: {0}", message + "\n");
-
-                string[] splitData = message.Split('~');
-                client.ChangeIpAddress(splitData[0]);
-                client.ChangeUserName(splitData[1]);
-
-                // Send back a response.
-                client.WriterStream.Write(splitData);
-                client.isConnected = true;
-                Console.WriteLine("User: {0}", splitData[0] + " connected through IP: " + splitData[1] + "\n");
+                string ipMessage = client.ReaderStream.ReadLine();
+                Console.WriteLine("Processing connection from: {0}", ipMessage);
+                string usernameMessage = client.ReaderStream.ReadLine();
+                Console.WriteLine("Processing connection from: {0}", usernameMessage);
+                if (!userNames.Contains(usernameMessage))
+                {
+                    client.ChangeUserName(usernameMessage);
+                    client.ChangeIpAddress(ipMessage);
+                    // Send back a response.
+                    client.WriterStream.Write("Connection successfull!\nYou are connected as {0}", client.UserName);
+                    client.isConnected = true;
+                    Console.WriteLine("User: {0} connected through IP: {1}", client.UserName, client.ClientIpAddress);
+                }
+                else
+                {
+                    client.WriterStream.Write("Error: Username is already in use. Please reconnect using a different username.\n");
+                    client.isConnected = true;
+                    Console.WriteLine("{1} tried to connect with duplicate username: {0} refusing connection... \n", ipMessage, usernameMessage);
+                }
                 return true;
             }
             catch (Exception e)
@@ -140,6 +150,7 @@ namespace KirkServer
                 Console.WriteLine(e.Message);
                 return false;
             }
+            return false;
         }
 
         public async Task ProcessConnectionRequestAsync(ConnectionModel client)
@@ -152,17 +163,25 @@ namespace KirkServer
             Console.WriteLine("Processing connection request...\n");
             try
             {
-                string message = await client.ReaderStream.ReadLineAsync();
-                Console.WriteLine("Received: {0}", message + "\n");
-
-                string[] splitData = message.Split('~');
-                client.ChangeUserName(splitData[0]);
-                client.ChangeIpAddress(splitData[1]);
-
-                // Send back a response.
-                client.WriterStream.Write(splitData);
-                client.isConnected = true;
-                Console.WriteLine("User: {0}", splitData[0] + " connected through IP: " + splitData[1] + "\n");
+                string ipMessage = await client.ReaderStream.ReadLineAsync();
+                Console.WriteLine("Processing connection from: {0}", ipMessage);
+                string usernameMessage = await client.ReaderStream.ReadLineAsync();
+                Console.WriteLine("Processing connection from: {0}", usernameMessage);
+                if (!userNames.Contains(usernameMessage))
+                {
+                    client.ChangeUserName(usernameMessage);
+                    client.ChangeIpAddress(ipMessage);
+                    // Send back a response.
+                    client.WriterStream.Write("Connection successfull!\nYou are connected as {0}", client.UserName);
+                    client.isConnected = true;
+                    Console.WriteLine("User: {0} connected through IP: {1}", client.UserName, client.ClientIpAddress);
+                }
+                else
+                {
+                    client.WriterStream.Write("Error: Username is already in use. Please reconnect using a different username.\n");
+                    client.isConnected = true;
+                    Console.WriteLine("{1} tried to connect with duplicate username: {0} refusing connection... \n", ipMessage, usernameMessage);
+                }
             }
             catch (Exception e)
             {
