@@ -133,13 +133,13 @@ namespace KirkServer
                     client.ChangeUserName(usernameMessage);
                     client.ChangeIpAddress(ipMessage);
                     // Send back a response.
-                    client.WriterStream.Write("Connection successfull!\nYou are connected as {0}", client.UserName);
+                    client.WriterStream.Write("Server~Connection successfull!\nYou are connected as {0}", client.UserName);
                     client.isConnected = true;
                     Console.WriteLine("User: {0} connected through IP: {1}", client.UserName, client.ClientIpAddress);
                 }
                 else
                 {
-                    client.WriterStream.Write("Error: Username is already in use. Please reconnect using a different username.\n");
+                    client.WriterStream.Write("Server~Error: Username is already in use. Please reconnect using a different username.\n");
                     client.isConnected = true;
                     Console.WriteLine("{1} tried to connect with duplicate username: {0} refusing connection... \n", ipMessage, usernameMessage);
                 }

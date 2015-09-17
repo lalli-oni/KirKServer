@@ -32,7 +32,7 @@ namespace KirkServer
                             while (incomingConnection.isConnected)
                             {
                                 broadcastingString = incomingConnection.ReceiveMessage();
-                                BroadcastMessage(broadcastingString);
+                                BroadcastMessage(broadcastingString, incomingConnection);
                             }
                         });
                         int i = 0;
@@ -51,13 +51,13 @@ namespace KirkServer
             }
         }
 
-        public static async Task BroadcastMessage(string message)
+        public static async Task BroadcastMessage(string message, ConnectionModel sender)
         {
             foreach (var receivingClient in listener.connectedClients)
             {
                 try
                 {
-                    await receivingClient.Key.SendMessageAsync(message);
+                    await receivingClient.Key.SendMessageAsync(sender.UserName + "~" + message);
                 }
                 catch (Exception e)
                 {

@@ -130,29 +130,27 @@ namespace KirkServer
 
         public void SendMessage(string broadcastingMessage)
         {
-            Console.WriteLine("Broadcasting message from " + this.UserName + ": " + broadcastingMessage);
-            this.WriterStream.WriteLine(this.UserName + ": " + broadcastingMessage + "\n");
+            Console.WriteLine("Broadcasting message: " + broadcastingMessage);
+            this.WriterStream.WriteLine(this.UserName + "~" + broadcastingMessage);
         }
 
         public async Task SendMessageAsync(string broadcastingMessage)
         {
-            Console.WriteLine("Broadcasting message from " + this.UserName + ": " + broadcastingMessage);
-            await this.WriterStream.WriteLineAsync(this.UserName + ": " + broadcastingMessage);
+            Console.WriteLine("Broadcasting message: " + broadcastingMessage);
+            await this.WriterStream.WriteLineAsync(this.UserName + "~" + broadcastingMessage);
         }
 
         public async Task<string> ReceiveMessageAsync()
         {
             string message = null;
-            Console.WriteLine("Receiving message from " + this.UserName);
             message = await ReaderStream.ReadToEndAsync();
-            Console.WriteLine("Message Received.");
+            Console.WriteLine("Message Received from " + this.UserName);
             return message;
         }
 
         public string ReceiveMessage()
         {
-            string message = null;
-            Console.WriteLine("Receiving message from " + this.UserName);
+            string message;
             try
             {
                 message = ReaderStream.ReadLine();
@@ -165,7 +163,7 @@ namespace KirkServer
             {
                 return null;
             }
-            Console.WriteLine("Message Received.");
+            Console.WriteLine("Message Received from " + this.UserName);
             return message;
         }
     }
