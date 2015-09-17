@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AddressService.cs" />
+    <Compile Include="ConnectionCollection.cs" />
     <Compile Include="ConnectionModel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -15,21 +17,42 @@ namespace KirkServer
     public class ServerListener : AddressService
     {
         public TcpListener listener;
-        public List<ConnectionModel> connectedClients;
+        public ConcurrentBag<ConnectionModel> connectedClients;
+        public int nrOfClients;
 
         public ServerListener()
         {
-            Console.WriteLine("Starting server at: 10.200.128.141:6789");
-            IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse("10.200.128.141"), 6789);
+            Console.WriteLine("Starting server at: 10.200.128.171:6789");
+            IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse("10.200.128.171"), 6789);
+            nrOfClients = 0;
             listener = new TcpListener(serverEndPoint);
-            connectedClients = new List<ConnectionModel>();
+            connectedClients = new ConcurrentBag<ConnectionModel>();
             listener.Start(100);
         }
 
-        public async Task receiveMessage(ConnectionModel client)
+        ~ServerListener()
+        {
+            Console.WriteLine("Listener is dying!");
+        }
+
+        public void receiveMessage(ConnectionModel client)
+        {
+            string message = client.ReaderStream.ReadLine();
+            if (message != null)
+            {
+                broadcastMessage(message);
+            }
+        }
+
+        public async Task<string> receiveMessageAsync(ConnectionModel client)
         {
             string message = await client.ReaderStream.ReadLineAsync();
-            broadcastMessage(message);
+            if (message != null)
+            {
+                return message;
+            }
+            Console.WriteLine("Received empty message from " + client.UserName);
+            return null;
         }
 
         public void broadcastMessage(string broadcastingMessage)
@@ -65,10 +88,7 @@ namespace KirkServer
         }
         public ConnectionModel listenForConnection()
         {
-            while (true)
-            {
                 Console.Write("Waiting for a connection... \n");
-
                 // Perform a blocking call to accept requests. 
                 // You could also user server.AcceptSocket() here.
                 TcpClient client = listener.AcceptTcpClient();
@@ -86,7 +106,6 @@ namespace KirkServer
                     Console.WriteLine(e.Message);
                     throw;
                 }
-            }
         }
 
         public bool processConnectionRequest(ConnectionModel client)

@@ -161,6 +161,10 @@ namespace KirkServer
             {
                 return null;
             }
+            if (message == null)
+            {
+                return null;
+            }
             Console.WriteLine("Message Received.");
             return message;
         }
