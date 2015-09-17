@@ -111,12 +111,12 @@ namespace KirkServer
             WriterStream = new StreamWriter(Stream) { AutoFlush = true };
         }
 
-        public void changeUserName(string inpUserName)
+        public void ChangeUserName(string inpUserName)
         {
             UserName = inpUserName;
         }
 
-        public void changeIPAddress(string inpIPaddress)
+        public void ChangeIpAddress(string inpIPaddress)
         {
             if (ClientIpAddress == null)
             {
@@ -128,19 +128,19 @@ namespace KirkServer
             }
         }
 
-        public void sendMessage(string broadcastingMessage)
+        public void SendMessage(string broadcastingMessage)
         {
             Console.WriteLine("Broadcasting message from " + this.UserName + ": " + broadcastingMessage);
             this.WriterStream.WriteLine(this.UserName + ": " + broadcastingMessage + "\n");
         }
 
-        public async Task sendMessageAsync(string broadcastingMessage)
+        public async Task SendMessageAsync(string broadcastingMessage)
         {
             Console.WriteLine("Broadcasting message from " + this.UserName + ": " + broadcastingMessage);
             await this.WriterStream.WriteLineAsync(this.UserName + ": " + broadcastingMessage);
         }
 
-        public async Task<string> receiveMessageAsync()
+        public async Task<string> ReceiveMessageAsync()
         {
             string message = null;
             Console.WriteLine("Receiving message from " + this.UserName);
@@ -149,7 +149,7 @@ namespace KirkServer
             return message;
         }
 
-        public string receiveMessage()
+        public string ReceiveMessage()
         {
             string message = null;
             Console.WriteLine("Receiving message from " + this.UserName);

@@ -17,7 +17,7 @@ namespace KirkServer
     public class ServerListener : AddressService
     {
         public TcpListener listener;
-        public ConcurrentBag<ConnectionModel> connectedClients;
+        public ConcurrentDictionary<ConnectionModel,string> connectedClients;
         public int nrOfClients;
 
         public ServerListener()
@@ -26,7 +26,7 @@ namespace KirkServer
             IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse("10.200.128.171"), 6789);
             nrOfClients = 0;
             listener = new TcpListener(serverEndPoint);
-            connectedClients = new ConcurrentBag<ConnectionModel>();
+            connectedClients = new ConcurrentDictionary<ConnectionModel, string>();
             listener.Start(100);
         }
 
@@ -35,16 +35,16 @@ namespace KirkServer
             Console.WriteLine("Listener is dying!");
         }
 
-        public void receiveMessage(ConnectionModel client)
+        public void ReceiveMessage(ConnectionModel client)
         {
             string message = client.ReaderStream.ReadLine();
             if (message != null)
             {
-                broadcastMessage(message);
+                BroadcastMessage(message);
             }
         }
 
-        public async Task<string> receiveMessageAsync(ConnectionModel client)
+        public async Task<string> ReceiveMessageAsync(ConnectionModel client)
         {
             string message = await client.ReaderStream.ReadLineAsync();
             if (message != null)
@@ -55,13 +55,13 @@ namespace KirkServer
             return null;
         }
 
-        public void broadcastMessage(string broadcastingMessage)
+        public void BroadcastMessage(string broadcastingMessage)
         {
             Console.WriteLine("Broadcasting message: " + broadcastingMessage);
-            Parallel.ForEach(connectedClients, listeningClient => listeningClient.sendMessage(broadcastingMessage));
+            Parallel.ForEach(connectedClients, connections => connections.Key.SendMessage(broadcastingMessage));
         }
 
-        public async Task listenForConnectionAsync()
+        public async Task ListenForConnectionAsync()
         {
             while (true)
             {
@@ -77,7 +77,11 @@ namespace KirkServer
                     NetworkStream stream = client.GetStream();
                     ConnectionModel connectingClient = new ConnectionModel(client, stream);
                     connectingClient.isConnected = false;
-                    connectedClients.Add(connectingClient);
+                    int i = 0;
+                    while (!connectedClients.TryAdd(connectingClient, connectingClient.UserName) || i < 1000)
+                    {
+                        i++;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -86,7 +90,7 @@ namespace KirkServer
                 }
             }
         }
-        public ConnectionModel listenForConnection()
+        public ConnectionModel ListenForConnection()
         {
                 Console.Write("Waiting for a connection... \n");
                 // Perform a blocking call to accept requests. 
@@ -108,7 +112,7 @@ namespace KirkServer
                 }
         }
 
-        public bool processConnectionRequest(ConnectionModel client)
+        public bool ProcessConnectionRequest(ConnectionModel client)
         {
             if (client.isConnected)
             {
@@ -122,8 +126,8 @@ namespace KirkServer
                 Console.WriteLine("Received: {0}", message + "\n");
 
                 string[] splitData = message.Split('~');
-                client.changeIPAddress(splitData[0]);
-                client.changeUserName(splitData[1]);
+                client.ChangeIpAddress(splitData[0]);
+                client.ChangeUserName(splitData[1]);
 
                 // Send back a response.
                 client.WriterStream.Write(splitData);
@@ -138,7 +142,7 @@ namespace KirkServer
             }
         }
 
-        public async Task processConnectionRequestAsync(ConnectionModel client)
+        public async Task ProcessConnectionRequestAsync(ConnectionModel client)
         {
             if (client.isConnected)
             {
@@ -152,8 +156,8 @@ namespace KirkServer
                 Console.WriteLine("Received: {0}", message + "\n");
 
                 string[] splitData = message.Split('~');
-                client.changeUserName(splitData[0]);
-                client.changeIPAddress(splitData[1]);
+                client.ChangeUserName(splitData[0]);
+                client.ChangeIpAddress(splitData[1]);
 
                 // Send back a response.
                 client.WriterStream.Write(splitData);

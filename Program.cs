@@ -24,18 +24,22 @@ namespace KirkServer
             {
                 while (true)
                 {
-                    ConnectionModel incomingConnection = listener.listenForConnection();
-                    if (listener.processConnectionRequest(incomingConnection))
+                    ConnectionModel incomingConnection = listener.ListenForConnection();
+                    if (listener.ProcessConnectionRequest(incomingConnection))
                     {
-                        listener.connectedClients.Add(incomingConnection);
                         Task waitForMessageTask = Task.Run(() =>
                         {
                             while (incomingConnection.isConnected)
                             {
-                                broadcastingString = incomingConnection.receiveMessage();
-                                broadcastMessage(broadcastingString);
+                                broadcastingString = incomingConnection.ReceiveMessage();
+                                BroadcastMessage(broadcastingString);
                             }
                         });
+                        int i = 0;
+                        while (listener.connectedClients.TryAdd(incomingConnection, incomingConnection.UserName) || i < 100)
+                        {
+                            i++;
+                        }
                         listener.nrOfClients = listener.connectedClients.Count;
                     }
                 }
@@ -47,11 +51,26 @@ namespace KirkServer
             }
         }
 
-        public static async Task broadcastMessage(string message)
+        public static async Task BroadcastMessage(string message)
         {
             foreach (var receivingClient in listener.connectedClients)
             {
-                await receivingClient.sendMessageAsync(message);
+                try
+                {
+                    await receivingClient.Key.SendMessageAsync(message);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    if (!receivingClient.Key.isConnected)
+                    {
+                        string outValue;
+                        for (int i = 0; i < 10; i++)
+                        {
+                            listener.connectedClients.TryRemove(receivingClient.Key, out outValue);
+                        }
+                    }
+                }
             }
         }
     }

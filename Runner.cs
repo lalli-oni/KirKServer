@@ -43,7 +43,7 @@ namespace KirkServer
 
         public void startListeningAsync()
         {
-            listeningTask = Task.Factory.StartNew(() => listenForConnection());
+            listeningTask = Task.Factory.StartNew(() => ListenForConnection());
         }
 
         public async void listeningAsync()
@@ -57,14 +57,14 @@ namespace KirkServer
             {
                 Parallel.ForEach(connectedClients, client =>
                 {
-                    if (client.isConnected == false)
-                    {
-                        processConnectionRequest(client);
-                    }
-                    else
-                    {
-                        client.receiveMessage();
-                    }
+                    //if (client.isConnected == false)
+                    //{
+                    //    processConnectionRequest(client);
+                    //}
+                    //else
+                    //{
+                    //    client.receiveMessage();
+                    //}
                 });
                 //foreach (ConnectionModel client in connectedClients)
                 //{
