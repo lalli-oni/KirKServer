@@ -47,29 +47,6 @@ namespace KirkServer
             }
         }
 
-        public static async Task listenForConnection()
-        {
-            await listener.listenForConnectionAsync();
-        }
-
-        public static async Task listenForMessage()
-        {
-            foreach (ConnectionModel client in listener.connectedClients)
-            {
-                if (client.isConnected)
-                {
-                    broadcastingString = await client.receiveMessageAsync();
-                }
-            }
-            Console.WriteLine("Received message: " + broadcastingString);
-            foreach (ConnectionModel client in listener.connectedClients)
-            {
-                await client.sendMessageAsync(broadcastingString);
-            }
-                //Parallel.ForEach(listener.connectedClients, (client) => client.sendMessage(broadcastingString));
-                broadcastingString = null;
-        }
-
         public static async Task broadcastMessage(string message)
         {
             foreach (var receivingClient in listener.connectedClients)
